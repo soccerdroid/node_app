@@ -23,9 +23,10 @@ exports.newData = function(req, res, next) {
       res.send({ error: err });
       return next(err);
     }
-
+    return 1;
     
   });
+
 }
 
 exports.getData = function(req, res, next) {  

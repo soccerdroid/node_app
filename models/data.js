@@ -3,8 +3,8 @@ const mongoose = require('mongoose'),
 
 // Schema defines how chat messages will be stored in MongoDB
 const DataSchema = new Schema({  
-  id: {
-    type: Schema.Types.ObjectId,
+  id_sensor: {
+    type: Number,
     required: true
   },
   value: {
@@ -13,7 +13,7 @@ const DataSchema = new Schema({
   }
 },
 {
-  timestamps: true // Saves createdAt and updatedAt as dates. createdAt will be our timestamp.
+  timestamps: true // Saves createdAt and updatedAt as dates. http://mongoosejs.com/docs/guide.html#timestamps
 
 });
 
