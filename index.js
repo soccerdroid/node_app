@@ -3,15 +3,20 @@
 const express = require('express');
 const mongoose=require('mongoose');
 const Data = require('./models/data');  
+var bodyParser = require('body-parser');
 
 //Initialize server and connection to MongoDB
 const app = express();
 app.use(express.static('public'));
-const port = 3000;
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(bodyParser.json());
+const port = 8000;
 
 var mongoDB= 'mongodb://127.0.0.1/my_database';
 mongoose.connect(mongoDB);
+mongoose.Promise = global.Promise;
 var db = mongoose.connection;
+
 //Bind connection to error event (to get notification of connection errors)
 db.on('error', console.error.bind(console, 'MongoDB connection error:'));
 
@@ -36,31 +41,48 @@ io.on('connection', (socket) => {
 //ROUTES
 app.get('/', (request, response) => {
   response.send('Hello from Express!');
+  console.log("hello")
 })
 
-app.get('/data/:id_sensor',(req,res,next) =>{
-	//DataController.getData(request,response,next);
+app.get('/data/:id_sensor',(request,response,next) =>{
+	if(!request.params.id_sensor) {
+    response.status(422).send({ error: 'No id provided.' });
+    return next();
+  }
+  
+
+  Data.find({ 'id_sensor': request.params.id_sensor })
+  .select('value')
+  .sort('createdAt') //- prefix for descending order
+  .exec(function(err, values) {
+      if (err) {
+        response.send({ error: err });
+        return next(err);
+      }
+
+      response.status(200).json({ values: values });
+    });
 }); 
 
 //POST new data
-app.post('/new/data/:id_sensor', (req,res,next) =>{
-	if(!req.params.id_sensor) {
-    res.status(422).send({ error: 'No id provided.' });
+app.post('/new/data/:id_sensor', (request,response,next) =>{
+	if(!request.params.id_sensor) {
+    response.status(422).send({ error: 'No id provided.' });
     return next();
   }
-  if(!req.body.value) {
-    res.status(422).send({ error: 'Please enter value.' });
+  if(!request.body.value) {
+    response.status(422).send({ error: 'Please enter value.' });
     return next();
   }
-
+  console.log(request.body);
   const data = new Data({
-    id_sensor: req.params.id_sensor,
-    value: req.body.value
+    id_sensor: request.params.id_sensor,
+    value: request.body.value
   });
 
-  data.save(function(err, newData) {
+  data.save(function(err, data) {
     if (err) {
-      res.send({ error: err });
+      response.send({ error: err });
       return next(err);
     }
     
